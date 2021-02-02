@@ -1,0 +1,33 @@
+## AutomatedVBRInstall.ps1 variables 
+
+vbrserveraccount = "Veeam_SVC"
+vbrserverpass = "Veeam123!"
+pdrive = "\\10.0.0.2\share\Veeam\B & R\v11 RC"
+vdrive = "\\10.0.0.2\share\CADE\Scripts\BR-UnattendedInstall-v10""
+ShareUser = "Domain01\User01"
+SharePWord = "Password"
+
+## MountVBR_ISO.ps1 variables
+
+$isoImg = "veeam_v11.iso"
+
+## VeeamConfiguration.ps1
+
+vbrcredsdomain = "LHR\Admin-MichaelCade
+vbrcredsdomainpass = "Veeam123!"
+vbrcredsdomaindesc = "Veeam Service Account"
+vbrcredscentos = "root"
+vbrcredscentospass = "Veeam1!"
+vbrcredscentosdesc = "CentOS Root / Veeam1!"
+vbrcredsubuntu = "root"
+vbrcredsubuntupass = "Veeam123!"
+vbrcredsubuntudesc = "Ubuntu Root / Veeam1!"
+WinProxy = "10.0.40.121"
+WinProxyName = "TPM04-PRX-WIN01.LHR.AperatureLabs.biz"
+LinProxy = "10.0.40.122"
+vcenter = "vc03.aperaturelabs.biz"
+vcenteruser = "Administrator@vsphere.local"
+vcenterpass = "cdw*X!7naD"
+vcenterdesc = "Mega Lab VC"
+vbrnassmbserver = "\\dc1\share\cade"
+centosvm = "TPM04-CENTOS-01"

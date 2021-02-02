@@ -1,11 +1,17 @@
 ﻿#Enable PowerShell Remote
 Enable-PSRemoting -Force
 
+#Read in powershell variables file
+$Path = "$PSScriptRoot\powershell_variables.txt"
+$values = Get-Content $Path | Out-String | ConvertFrom-StringData
+
+#Share User creds
+$User = $values.ShareUser
+$PWord = ConvertTo-SecureString -String $values.SharePword -AsPlainText -Force
+$cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
+
 #Disable Local Firewall
 Set-NetFirewallProfile -Profile * -Enabled False
-
-#Create HTTP listerner for WinRM connection
-#New-Item -Path WSMan:\localhost\Listener\ -Transport HTTP -Address * 
 
 #Restart WinRM Service
 Restart-Service WinRM
@@ -14,11 +20,11 @@ Restart-Service WinRM
 set-executionpolicy bypass -Force
 
 #Create Veeam Service Account
-New-LocalUser -AccountNeverExpires:$true -Password ( ConvertTo-SecureString -AsPlainText -Force 'Veeam123!') -Name 'Veeam_SVC' | Add-LocalGroupMember -Group administrators
+New-LocalUser -AccountNeverExpires:$true -Password ( ConvertTo-SecureString -AsPlainText -Force $values.vbrserverpass) -Name $values.vbrserveraccount | Add-LocalGroupMember -Group administrators
 
 #Mount remote shares for scripts
-net use p: "\\10.0.0.2\share\Veeam\B & R\v11 RC" /user:APLABS\MichaelCade Veeam123!
-net use v: "\\10.0.0.2\share\CADE\Scripts\BR-UnattendedInstall-v10" /user:APLABS\MichaelCade Veeam123!
+New-PSDrive -Name "P" -Root $values.pdrive -Persist -PSProvider "FileSystem" -Credential $cred
+New-PSDrive -Name "V" -Root $values.vdrive -Persist -PSProvider "FileSystem" -Credential $cred
 
 Powershell.exe -file V:\MountVBR_ISO.ps1
 

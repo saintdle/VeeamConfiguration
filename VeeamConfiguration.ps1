@@ -1,4 +1,7 @@
-﻿
+﻿#Read in powershell variables file
+$Path = "P:\powershell_variables.txt"
+$values = Get-Content $Path | Out-String | ConvertFrom-StringData
+
 #This will check the Veeam service has started and is running 
 
 $svc = Get-Service VeeamBackupSvc
@@ -10,18 +13,18 @@ Write-Progress -Activity "Waiting for Veeam services to start"
 #XFSRepo_IP = "10.0.40.123"
 
 #Variables
-Add-VBRCredentials -User "LHR\Admin-MichaelCade" -Password "Veeam123!" -Description "Veeam Service Account"
-Add-VBRCredentials -type Linux -User "root" -Password "Veeam1!" -Description "CentOS Root / Veeam1!"
-Add-VBRCredentials -type Linux -User "root" -Password "Veeam123!" -Description "Ubuntu Root / Veeam1!"
+Add-VBRCredentials -User $values.vbrcredsdomain -Password $values.vbrcredsdomainpass -Description $values.vbrcredsdomaindesc
+Add-VBRCredentials -type Linux -User $values.vbrcredscentos -Password $values.vbrcredscentospass -Description $values.vbrcredscentosdesc
+Add-VBRCredentials -type Linux -User $values.vbrcredsubuntu -Password $values.vbrcredsubuntupass -Description $values.vbrcredsubuntudesc
 
-$WindowsCredential = Get-VBRCredentials -name "LHR\admin-michaelcade"
-$CentOSCredential = get-vbrcredentials | where {$_.description -like "CentOS Root / Veeam1!"}
-$UbuntuOSCredential = get-vbrcredentials | where {$_.description -like "Ubuntu Root / Veeam123!"}
+$WindowsCredential = Get-VBRCredentials -name $values.vbrcredsdomain
+$CentOSCredential = get-vbrcredentials | where {$_.description -like "${values.vbrcredscentosdesc}"}
+$UbuntuOSCredential = get-vbrcredentials | where {$_.description -like "${$values.vbrcredsubuntudesc}"}
 
-$vbrserver = hostname
-$WinProxy = "10.0.40.121"
-$WinProxyName = "TPM04-PRX-WIN01.LHR.AperatureLabs.biz"
-$LinProxy = "10.0.40.122"
+$vbrserver = $env:computername
+$WinProxy = $values.WinProxy
+$WinProxyName = $values.WinProxyyName
+$LinProxy = $values.LinProxy
 
 
 #Add Windows Proxy 
@@ -38,15 +41,14 @@ Add-VBRViLinuxProxy -Server $LinProxy
 #add repository role with XFS and Immutable flag 
 
 #Add vSphere Environment
-Add-VBRvCenter -Name "vc03.aperaturelabs.biz" -User "Administrator@vsphere.local" -Password "cdw*X!7naD" -Description "Mega Lab VC"
-
+Add-VBRvCenter -Name $values.vcenter -User $values.vcenteruser -Password $values.vcenterpass -Description $vallues.vcenterdesc
 
 #Add NAS Share 
 Resize-Partition -DriveLetter C -Size $(Get-PartitionSupportedSize -DriveLetter C).SizeMax
 new-item c:\CacheRepository -itemtype directory
 Add-VBRBackupRepository -Name "NAS Cache Repository" -Server $vbrserver -Folder "c:\CacheRepository" -Type WinLocal
 $CacheRepository = Get-VBRBackupRepository -Name "NAS Cache Repository"
-Add-VBRNASSMBServer -Path "\\dc1\share\cade" -AccessCredentials $WindowsCredential -CacheRepository $CacheRepository
+Add-VBRNASSMBServer -Path $values.vbrnassmbserver -AccessCredentials $WindowsCredential -CacheRepository $CacheRepository
 
 #Create Scale Out Backup Repository
 new-item c:\PerformanceTier -itemtype directory
@@ -60,11 +62,11 @@ $repository = Get-VBRBackupRepository -ScaleOut -Name "Veeam Scale-Out Repositor
 #GCP
 
 #Create Veeam VMware Backup Job 
-Find-VBRViEntity -Name TPM04-CENTOS-01 | Add-VBRViBackupJob -Name "VMware - Web Server Backup" -BackupRepository $repository -Description "Automated VMware Web Server Backup"
+Find-VBRViEntity -Name $values.centosvm | Add-VBRViBackupJob -Name "VMware - Web Server Backup" -BackupRepository $repository -Description "Automated VMware Web Server Backup"
 
 #Create NAS Backup job 
-$NASserver = Get-VBRNASServer -Name "\\dc1\share\cade"
-$NASobject = New-VBRNASBackupJobObject -Server $NASserver -Path "\\dc1\share\cade"
+$NASserver = Get-VBRNASServer -Name $values.vbrnassmbserver
+$NASobject = New-VBRNASBackupJobObject -Server $NASserver -Path $values.vbrnassmbserver
 Add-VBRNASBackupJob -BackupObject $NASobject -ShortTermBackupRepository $repository -Name "NAS Backup Job" -Description "Automated VMware Web Server Backup"
 
 #Create Virtual Lab 
